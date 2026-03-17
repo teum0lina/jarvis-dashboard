@@ -578,7 +578,7 @@ function manualUpdate() {
   }
 }
 
-fetchAndUpdate();
+fetch("trading_log.json").then(r=>r.text()).then(t=>{const e=parseLog(t);if(e.length)buildDashboard(e);});fetchAndUpdate();
 setInterval(fetchAndUpdate, 30000);
 </script>
 </body>
