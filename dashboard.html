@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>JARVIS v2 // TRADING OS</title>
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Oxanium:wght@400;600;800&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+:root {
+  --bg: #050508;
+  --bg2: #040407;
+  --bg3: #030306;
+  --panel: #0c0c10;
+  --border: #111;
+  --border2: #0c2820;
+  --green: #00e5a0;
+  --orange: #ff6600;
+  --yellow: #f0c040;
+  --purple: #a070ff;
+  --red: #ff4060;
+  --blue: #4090ff;
+  --text: #c0d8cc;
+  --text-dim: #3a6050;
+  --text-muted: #1a4030;
+  --text-bright: #e8f8f0;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body {
+  font-family: 'Share Tech Mono', 'Courier New', monospace;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  font-size: 13px;
+}
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,229,160,0.012) 2px, rgba(0,229,160,0.012) 4px);
+  pointer-events: none;
+  z-index: 999;
+}
+
+/* HEADER */
+.header {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  border-bottom: 2px solid var(--orange);
+}
+.header-logo {
+  background: var(--orange);
+  padding: 14px 20px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+.header-logo-main {
+  font-size: 22px;
+  font-weight: 900;
+  color: var(--bg);
+  letter-spacing: 4px;
+  line-height: 1;
+  font-family: 'Oxanium', monospace;
+}
+.header-logo-sub {
+  font-size: 7px;
+  color: #7a2800;
+  letter-spacing: 4px;
+  margin-top: 2px;
+}
+.header-mid {
+  padding: 14px 20px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 5px;
+}
+.header-online {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  color: var(--green);
+  letter-spacing: 3px;
+  font-family: 'Oxanium', monospace;
+  font-weight: 800;
+}
+.pulse-dot {
+  width: 7px; height: 7px;
+  background: var(--green);
+  border-radius: 50%;
+  animation: pulse 2s ease-in-out infinite;
+  flex-shrink: 0;
+}
+.pulse-dot.err { background: var(--red); }
+@keyframes pulse { 0%,100%{opacity:.3} 50%{opacity:1} }
+.header-tagline { font-size: 9px; color: var(--text-dim); letter-spacing: 1px; }
+.header-right {
+  padding: 14px 24px;
+  border-left: 1px solid var(--border);
+  text-align: right;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+.header-nw-label { font-size: 8px; color: var(--text-dim); letter-spacing: 2px; margin-bottom: 4px; }
+.header-nw-val {
+  font-size: 34px;
+  font-weight: 900;
+  color: var(--text-bright);
+  letter-spacing: -1px;
+  line-height: 1;
+  font-family: 'Oxanium', monospace;
+}
+.header-pnl {
+  font-size: 12px;
+  margin-top: 4px;
+  font-family: 'Oxanium', monospace;
+  font-weight: 600;
+}
+
+/* KPI STRIP */
+.kpi-strip {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr 1fr;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg2);
+}
+.kpi-cell {
+  padding: 0 18px;
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-height: 100px;
+}
+.kpi-cell:last-child { border-right: none; }
+.kpi-label { font-size: 7px; letter-spacing: 3px; color: #3a8060; margin-bottom: 8px; }
+.kpi-val {
+  font-size: 36px;
+  font-weight: 900;
+  line-height: 1;
+  font-family: 'Oxanium', monospace;
+}
+.kpi-val.green { color: var(--green); }
+.kpi-val.orange { color: var(--orange); }
+.kpi-val.red { color: var(--red); }
+.kpi-val.white { color: var(--text-bright); }
+.kpi-sub { font-size: 8px; color: var(--text-muted); margin-top: 6px; }
+
+/* BODY GRID */
+.body-grid {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr 1fr;
+  gap: 1px;
+  background: var(--border);
+}
+.col { padding: 18px; background: var(--bg); }
+.col-b { background: var(--bg2); }
+
+/* SECTION TITLE */
+.sec-title {
+  font-size: 7px;
+  letter-spacing: 3px;
+  color: var(--orange);
+  margin-bottom: 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.sec-title-line { flex: 1; height: 1px; background: var(--border); }
+
+/* CHART */
+.chart-wrap { position: relative; width: 100%; height: 200px; margin-bottom: 4px; }
+
+/* SCAN LOG */
+.scan-item {
+  padding: 10px 0;
+  border-bottom: 1px solid var(--panel);
+}
+.scan-item:last-child { border-bottom: none; }
+.scan-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px; }
+.scan-time { font-size: 9px; color: var(--text-dim); letter-spacing: 1px; }
+.scan-mood {
+  font-size: 8px;
+  padding: 2px 8px;
+  border-radius: 2px;
+  font-family: 'Oxanium', monospace;
+  font-weight: 600;
+  letter-spacing: 1px;
+}
+.mood-bullish { background: rgba(0,229,160,0.1); color: var(--green); border: 1px solid rgba(0,229,160,0.2); }
+.mood-bearish { background: rgba(255,64,96,0.1); color: var(--red); border: 1px solid rgba(255,64,96,0.2); }
+.mood-neutral { background: rgba(255,102,0,0.08); color: var(--orange); border: 1px solid rgba(255,102,0,0.15); }
+.mood-mixed { background: rgba(64,144,255,0.08); color: var(--blue); border: 1px solid rgba(64,144,255,0.15); }
+.scan-text { font-size: 10px; color: var(--text-dim); line-height: 1.6; }
+
+/* TRADE LOG */
+.trade-item {
+  display: grid;
+  grid-template-columns: 50px 60px 1fr auto;
+  gap: 8px;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--panel);
+  font-size: 11px;
+}
+.trade-item:last-child { border-bottom: none; }
+.trade-buy {
+  font-size: 8px; padding: 2px 6px;
+  background: rgba(0,229,160,0.1); color: var(--green);
+  border: 1px solid rgba(0,229,160,0.2);
+  font-family: 'Oxanium', monospace; font-weight: 700;
+  text-align: center;
+}
+.trade-sell {
+  font-size: 8px; padding: 2px 6px;
+  background: rgba(255,64,96,0.1); color: var(--red);
+  border: 1px solid rgba(255,64,96,0.2);
+  font-family: 'Oxanium', monospace; font-weight: 700;
+  text-align: center;
+}
+.trade-sym { color: var(--text-bright); font-family: 'Oxanium', monospace; font-weight: 700; font-size: 12px; }
+.trade-time { font-size: 9px; color: var(--text-muted); }
+.trade-amt { color: var(--orange); font-family: 'Oxanium', monospace; font-weight: 600; font-size: 12px; text-align: right; }
+
+/* STATS */
+.stat-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--panel);
+  font-size: 10px;
+}
+.stat-row:last-child { border-bottom: none; }
+.stat-key { color: var(--text-dim); letter-spacing: 1px; }
+.stat-val { color: var(--text-bright); font-family: 'Oxanium', monospace; font-weight: 600; }
+
+/* POSITIONS */
+.pos-item {
+  padding: 10px 0;
+  border-bottom: 1px solid var(--panel);
+}
+.pos-item:last-child { border-bottom: none; }
+.pos-header { display: flex; justify-content: space-between; align-items: center; }
+.pos-sym { font-size: 14px; font-family: 'Oxanium', monospace; font-weight: 800; color: var(--text-bright); }
+.pos-pnl { font-size: 13px; font-family: 'Oxanium', monospace; font-weight: 700; }
+.pos-detail { font-size: 9px; color: var(--text-dim); margin-top: 3px; }
+
+/* EMPTY */
+.empty { padding: 20px 0; font-size: 10px; color: var(--text-muted); letter-spacing: 1px; }
+
+/* MOOD CHART */
+.mood-chart-wrap { position: relative; height: 120px; margin-top: 8px; }
+
+/* MANUAL PASTE */
+.paste-section {
+  border-top: 1px solid var(--border);
+  padding: 16px 20px;
+  background: var(--bg3);
+}
+.paste-label { font-size: 7px; letter-spacing: 3px; color: var(--text-dim); margin-bottom: 8px; }
+.paste-area {
+  width: 100%;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  color: var(--text);
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 10px;
+  padding: 10px;
+  resize: vertical;
+  min-height: 60px;
+  outline: none;
+}
+.paste-area:focus { border-color: var(--orange); }
+.paste-btn {
+  margin-top: 8px;
+  padding: 7px 16px;
+  background: transparent;
+  border: 1px solid var(--orange);
+  color: var(--orange);
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 2px;
+  cursor: pointer;
+}
+.paste-btn:hover { background: rgba(255,102,0,0.1); }
+
+/* ALERT */
+.alert-item {
+  font-size: 9px;
+  padding: 6px 10px;
+  margin-bottom: 6px;
+  border-left: 2px solid;
+  line-height: 1.5;
+}
+.alert-green { border-color: var(--green); color: #3a8060; background: rgba(0,229,160,0.04); }
+.alert-orange { border-color: var(--orange); color: #cc6020; background: rgba(255,102,0,0.04); }
+.alert-red { border-color: var(--red); color: #aa2040; background: rgba(255,64,96,0.04); }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-logo">
+    <div class="header-logo-main">JARVIS</div>
+    <div class="header-logo-sub">v2 // TRADING OS</div>
+  </div>
+  <div class="header-mid">
+    <div class="header-online">
+      <div class="pulse-dot" id="pulse-dot"></div>
+      <span id="connection-status">CONNECTING</span>
+    </div>
+    <div class="header-tagline" id="last-updated">Fetching data from local server...</div>
+  </div>
+  <div class="header-right">
+    <div class="header-nw-label">PORTFOLIO VALUE</div>
+    <div class="header-nw-val" id="h-portfolio">$100,000</div>
+    <div class="header-pnl" id="h-pnl" style="color: var(--text-dim);">+$0.00 / +0.00%</div>
+  </div>
+</div>
+
+<div class="kpi-strip">
+  <div class="kpi-cell">
+    <div class="kpi-label">TOTAL P&L</div>
+    <div class="kpi-val green" id="k-pnl">$0.00</div>
+    <div class="kpi-sub" id="k-pnl-pct">since launch</div>
+  </div>
+  <div class="kpi-cell">
+    <div class="kpi-label">CASH AVAILABLE</div>
+    <div class="kpi-val orange" id="k-cash">$100,000</div>
+    <div class="kpi-sub" id="k-bp">buying power loading...</div>
+  </div>
+  <div class="kpi-cell">
+    <div class="kpi-label">TRADES EXECUTED</div>
+    <div class="kpi-val white" id="k-trades">0</div>
+    <div class="kpi-sub" id="k-scans">0 total scans</div>
+  </div>
+  <div class="kpi-cell">
+    <div class="kpi-label">LAST MOOD</div>
+    <div class="kpi-val orange" id="k-mood">—</div>
+    <div class="kpi-sub" id="k-mood-sub">loading...</div>
+  </div>
+</div>
+
+<div class="body-grid">
+
+  <div class="col">
+    <div class="sec-title">PORTFOLIO CURVE <span class="sec-title-line"></span></div>
+    <div class="chart-wrap">
+      <canvas id="portfolioChart"></canvas>
+    </div>
+    <div class="sec-title" style="margin-top: 16px;">OPEN POSITIONS <span class="sec-title-line"></span></div>
+    <div id="positions-list"><div class="empty">NO OPEN POSITIONS</div></div>
+  </div>
+
+  <div class="col col-b">
+    <div class="sec-title">SCAN LOG <span class="sec-title-line"></span></div>
+    <div id="scan-log"><div class="empty">LOADING SCANS...</div></div>
+  </div>
+
+  <div class="col">
+    <div class="sec-title">AGENT STATUS <span class="sec-title-line"></span></div>
+    <div class="stat-row"><span class="stat-key">MODE</span><span class="stat-val" id="s-mode">—</span></div>
+    <div class="stat-row"><span class="stat-key">LAST SCAN</span><span class="stat-val" id="s-last">—</span></div>
+    <div class="stat-row"><span class="stat-key">CASH</span><span class="stat-val" id="s-cash">—</span></div>
+    <div class="stat-row"><span class="stat-key">BUYING POWER</span><span class="stat-val" id="s-bp">—</span></div>
+    <div class="stat-row"><span class="stat-key">RUNNING SINCE</span><span class="stat-val" id="s-since">—</span></div>
+    <div class="stat-row"><span class="stat-key">TOTAL SCANS</span><span class="stat-val" id="s-scans">—</span></div>
+    <div class="stat-row"><span class="stat-key">WIN RATE</span><span class="stat-val" id="s-winrate">—</span></div>
+
+    <div class="sec-title" style="margin-top: 18px;">MOOD BREAKDOWN <span class="sec-title-line"></span></div>
+    <div class="mood-chart-wrap">
+      <canvas id="moodChart"></canvas>
+    </div>
+
+    <div class="sec-title" style="margin-top: 18px;">TRADE HISTORY <span class="sec-title-line"></span></div>
+    <div id="trade-log"><div class="empty">NO TRADES YET</div></div>
+
+    <div class="sec-title" style="margin-top: 18px;">SIGNALS <span class="sec-title-line"></span></div>
+    <div id="signals-list"><div class="empty">AWAITING DATA</div></div>
+  </div>
+
+</div>
+
+<div class="paste-section">
+  <div class="paste-label">MANUAL UPDATE — PASTE trading_log.json BELOW</div>
+  <textarea class="paste-area" id="log-input" placeholder="cat ~/trading-agent/trading_log.json — paste output here if auto-refresh unavailable..."></textarea>
+  <button class="paste-btn" onclick="manualUpdate()">UPDATE DASHBOARD ▶</button>
+</div>
+
+<script>
+let portfolioChart, moodChart;
+
+function parseLog(raw) {
+  return raw.trim().split('\n').map(l => { try { return JSON.parse(l.trim()); } catch(e) { return null; } }).filter(Boolean);
+}
+
+function fmt(n) { return '$' + Number(n).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2}); }
+function fmtK(n) { return '$' + Number(n).toLocaleString('en-US', {maximumFractionDigits: 0}); }
+function fmtTime(ts) { return new Date(ts).toLocaleString('en-GB', {day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit'}); }
+
+function buildDashboard(entries) {
+  if (!entries.length) return;
+  const latest = entries[entries.length - 1];
+  const first = entries[0];
+  const startVal = first.account.portfolio_value;
+  const currentVal = latest.account.portfolio_value;
+  const pnl = currentVal - startVal;
+  const pnlPct = ((pnl / startVal) * 100).toFixed(2);
+  const allTrades = entries.flatMap(e => (e.trades || []).map(t => ({...t, scanTime: e.timestamp})));
+  const pnlColor = pnl > 0 ? 'var(--green)' : pnl < 0 ? 'var(--red)' : 'var(--text-dim)';
+  const pnlSign = pnl >= 0 ? '+' : '';
+
+  document.getElementById('h-portfolio').textContent = fmtK(currentVal);
+  document.getElementById('h-pnl').textContent = pnlSign + fmt(pnl) + ' / ' + pnlSign + pnlPct + '%';
+  document.getElementById('h-pnl').style.color = pnlColor;
+
+  const kPnl = document.getElementById('k-pnl');
+  kPnl.textContent = pnlSign + fmt(pnl);
+  kPnl.className = 'kpi-val ' + (pnl > 0 ? 'green' : pnl < 0 ? 'red' : 'white');
+  document.getElementById('k-pnl-pct').textContent = pnlSign + pnlPct + '% since launch';
+  document.getElementById('k-cash').textContent = fmtK(latest.account.cash);
+  document.getElementById('k-bp').textContent = fmtK(latest.account.buying_power) + ' buying power';
+  document.getElementById('k-trades').textContent = allTrades.length;
+  document.getElementById('k-scans').textContent = entries.length + ' total scans';
+
+  const lastMood = (latest.mood || 'neutral').toUpperCase();
+  document.getElementById('k-mood').textContent = lastMood;
+  document.getElementById('k-mood-sub').textContent = fmtTime(latest.timestamp);
+  document.getElementById('last-updated').textContent = 'LAST SYNC: ' + fmtTime(latest.timestamp);
+
+  document.getElementById('s-mode').textContent = allTrades.length > 0 ? 'ACTIVE TRADING' : 'HOLDING CASH';
+  document.getElementById('s-last').textContent = fmtTime(latest.timestamp);
+  document.getElementById('s-cash').textContent = fmtK(latest.account.cash);
+  document.getElementById('s-bp').textContent = fmtK(latest.account.buying_power);
+  document.getElementById('s-since').textContent = fmtTime(first.timestamp);
+  document.getElementById('s-scans').textContent = entries.length;
+  document.getElementById('s-winrate').textContent = allTrades.length > 0 ? '—' : 'N/A';
+
+  const timestamps = entries.map(e => new Date(e.timestamp).toLocaleTimeString('en-GB', {hour: '2-digit', minute: '2-digit'}));
+  const values = entries.map(e => e.account.portfolio_value);
+  const minVal = Math.min(...values);
+  const maxVal = Math.max(...values);
+
+  if (portfolioChart) portfolioChart.destroy();
+  portfolioChart = new Chart(document.getElementById('portfolioChart'), {
+    type: 'line',
+    data: {
+      labels: timestamps,
+      datasets: [{
+        data: values,
+        borderColor: '#00e5a0',
+        backgroundColor: 'rgba(0,229,160,0.04)',
+        borderWidth: 1.5,
+        pointRadius: 2,
+        pointBackgroundColor: '#00e5a0',
+        fill: true,
+        tension: 0.3
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { ticks: { maxTicksLimit: 8, color: '#3a6050', font: { size: 9, family: 'Share Tech Mono' } }, grid: { color: 'rgba(255,255,255,0.03)' } },
+        y: {
+          ticks: { color: '#3a6050', font: { size: 9, family: 'Share Tech Mono' }, callback: v => '$' + Number(v).toLocaleString() },
+          grid: { color: 'rgba(255,255,255,0.03)' },
+          min: minVal * 0.998, max: maxVal * 1.002
+        }
+      }
+    }
+  });
+
+  const moodCounts = { bullish: 0, bearish: 0, neutral: 0, mixed: 0 };
+  entries.forEach(e => { const m = (e.mood || 'neutral').toLowerCase(); if (moodCounts[m] !== undefined) moodCounts[m]++; else moodCounts.neutral++; });
+  const moodLabels = Object.keys(moodCounts).filter(k => moodCounts[k] > 0);
+  const moodColors = { bullish: '#00e5a0', bearish: '#ff4060', neutral: '#ff6600', mixed: '#4090ff' };
+  if (moodChart) moodChart.destroy();
+  moodChart = new Chart(document.getElementById('moodChart'), {
+    type: 'doughnut',
+    data: { labels: moodLabels, datasets: [{ data: moodLabels.map(k => moodCounts[k]), backgroundColor: moodLabels.map(k => moodColors[k]), borderWidth: 0 }] },
+    options: {
+      responsive: true, maintainAspectRatio: false, cutout: '65%',
+      plugins: { legend: { display: true, position: 'right', labels: { color: '#3a6050', font: { size: 9, family: 'Share Tech Mono' }, boxWidth: 8, padding: 6 } } }
+    }
+  });
+
+  const logEl = document.getElementById('scan-log');
+  logEl.innerHTML = entries.slice(-7).reverse().map(e => {
+    const mood = (e.mood || 'neutral').toLowerCase();
+    const moodClass = ['bullish','bearish','neutral','mixed'].includes(mood) ? 'mood-'+mood : 'mood-neutral';
+    const text = (e.decisions?.analysis || e.decisions?.summary || '—').substring(0, 130) + '...';
+    const tops = (e.decisions?.top_opportunities || []).filter(t => t && t !== 'N/A').slice(0,5).join(' · ');
+    return `<div class="scan-item">
+      <div class="scan-header">
+        <span class="scan-time">${fmtTime(e.timestamp)}</span>
+        <span class="scan-mood ${moodClass}">${mood.toUpperCase()}</span>
+      </div>
+      <div class="scan-text">${text}</div>
+      ${tops ? `<div style="font-size:9px;color:var(--orange);margin-top:4px;letter-spacing:1px;">${tops}</div>` : ''}
+    </div>`;
+  }).join('');
+
+  const tradeEl = document.getElementById('trade-log');
+  if (!allTrades.length) {
+    tradeEl.innerHTML = '<div class="empty">NO TRADES YET — SCANNING</div>';
+  } else {
+    tradeEl.innerHTML = allTrades.slice(-8).reverse().map(t => {
+      const amt = t.notional ? fmt(t.notional) : (t.qty ? t.qty + ' SH' : '—');
+      return `<div class="trade-item">
+        <span class="${t.side === 'buy' ? 'trade-buy' : 'trade-sell'}">${(t.side||'').toUpperCase()}</span>
+        <span class="trade-sym">${t.symbol}</span>
+        <span class="trade-time">${fmtTime(t.scanTime)}</span>
+        <span class="trade-amt">${amt}</span>
+      </div>`;
+    }).join('');
+  }
+
+  const posEl = document.getElementById('positions-list');
+  const latestActions = (latest.decisions?.actions || []).filter(a => a.action === 'buy' || a.action === 'hold').filter(a => a.symbol !== 'CASH');
+  if (!latestActions.length) {
+    posEl.innerHTML = '<div class="empty">NO OPEN POSITIONS</div>';
+  } else {
+    posEl.innerHTML = latestActions.slice(0,6).map(a => {
+      const amt = a.notional ? fmt(a.notional) : '—';
+      const convColor = a.conviction === 'high' ? 'var(--green)' : a.conviction === 'medium' ? 'var(--orange)' : 'var(--text-dim)';
+      return `<div class="pos-item">
+        <div class="pos-header">
+          <span class="pos-sym">${a.symbol}</span>
+          <span style="font-size:9px;color:${convColor};font-family:'Oxanium',monospace;font-weight:700;">${(a.conviction||'').toUpperCase()} ${a.confidence ? a.confidence+'/10' : ''}</span>
+        </div>
+        <div class="pos-detail">${(a.reason||'').substring(0,80)}...</div>
+      </div>`;
+    }).join('');
+  }
+
+  const sigEl = document.getElementById('signals-list');
+  const tops = (latest.decisions?.top_opportunities || []).filter(t => t && t !== 'N/A').slice(0,5);
+  if (!tops.length) {
+    sigEl.innerHTML = '<div class="empty">NO SIGNALS YET</div>';
+  } else {
+    sigEl.innerHTML = tops.map((sym, i) => `
+      <div class="stat-row">
+        <span class="stat-key">#${i+1} OPPORTUNITY</span>
+        <span class="stat-val" style="color:var(--green)">${sym}</span>
+      </div>`).join('');
+  }
+}
+
+async function fetchAndUpdate() {
+  try {
+    const res = await fetch('http://localhost:8765/log?t=' + Date.now());
+    if (!res.ok) throw new Error();
+    const text = await res.text();
+    const entries = parseLog(text);
+    if (entries.length) {
+      buildDashboard(entries);
+      document.getElementById('connection-status').textContent = 'LIVE — AUTO-REFRESHING';
+      document.getElementById('pulse-dot').className = 'pulse-dot';
+    }
+  } catch(e) {
+    document.getElementById('connection-status').textContent = 'MANUAL MODE';
+    document.getElementById('pulse-dot').className = 'pulse-dot err';
+    document.getElementById('last-updated').textContent = 'Run: python3 ~/trading-agent/server.py — then refresh';
+  }
+}
+
+function manualUpdate() {
+  const raw = document.getElementById('log-input').value.trim();
+  if (!raw) return;
+  const entries = parseLog(raw);
+  if (entries.length) {
+    buildDashboard(entries);
+    document.getElementById('connection-status').textContent = 'MANUAL UPDATE';
+  }
+}
+
+fetchAndUpdate();
+setInterval(fetchAndUpdate, 30000);
+</script>
+</body>
+</html>
